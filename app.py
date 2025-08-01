@@ -9,7 +9,7 @@ uploaded_file = st.file_uploader("העלה קובץ ZIP עם PDF", type="zip")
 
 if uploaded_file:
     with zipfile.ZipFile(uploaded_file) as archive:
-        pdf_files = [f for f in archive.namelist() if f.endswith(".pdf")]
+        ppdf_files = [f for f in archive.namelist() if f.lower().endswith('.pdf')]
 
         if not pdf_files:
             st.warning("לא נמצאו קבצי PDF בתוך קובץ ה-ZIP.")
