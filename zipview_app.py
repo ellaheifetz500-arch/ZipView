@@ -5,12 +5,16 @@ import os
 import io
 import base64
 from PIL import Image
-from pdf2image import convert_from_bytes
 
-st.set_page_config(page_title="ZipView – Beta+", layout="wide")
-st.title("📦 ZipView – Preview ZIP Files Without Extracting")
+st.set_page_config(page_title="ZipView – PDF + Video Preview", layout="wide")
+st.title("📦 ZipView – Enhanced Viewer")
 
 uploaded_file = st.file_uploader("Upload a ZIP file", type="zip")
+
+def render_pdf_embed(file_bytes):
+    b64 = base64.b64encode(file_bytes).decode()
+    pdf_display = f'<iframe src="data:application/pdf;base64,{b64}" width="100%" height="500px" type="application/pdf"></iframe>'
+    st.markdown(pdf_display, unsafe_allow_html=True)
 
 if uploaded_file:
     with zipfile.ZipFile(uploaded_file, "r") as zip_ref:
@@ -30,26 +34,20 @@ if uploaded_file:
                     pass
 
             elif file.lower().endswith(".pdf"):
-                try:
-                    images = convert_from_bytes(file_bytes, first_page=1, last_page=1)
-                    if images:
-                        previews.append(("pdf", file, images[0]))
-                except Exception:
-                    st.warning(f"Could not render PDF preview for {file}.")
+                previews.append(("pdf", file, file_bytes))
 
             elif file.lower().endswith(".mp4"):
-                try:
-                    previews.append(("video", file, file_bytes))
-                except:
-                    pass
+                previews.append(("video", file, file_bytes))
 
         if previews:
             st.subheader("📂 Previews")
             for preview_type, name, content in previews:
                 st.markdown(f"**{name}**")
-                if preview_type == "image" or preview_type == "pdf":
+                if preview_type == "image":
                     st.image(content, use_container_width=True)
                 elif preview_type == "video":
                     st.video(content)
+                elif preview_type == "pdf":
+                    render_pdf_embed(content)
         else:
             st.warning("No previewable files found in this ZIP.")
