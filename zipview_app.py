@@ -7,8 +7,6 @@ from PIL import Image
 import fitz  # PyMuPDF
 import base64
 import subprocess
-from pydub import AudioSegment
-import io
 
 st.set_page_config(
     page_title="Preview ZIP Without Extraction",
@@ -21,15 +19,19 @@ st.markdown("Upload a ZIP file to see its contents as thumbnails, PDFs, videos, 
 
 uploaded_file = st.file_uploader("Upload a ZIP file", type="zip")
 
-def extract_audio_preview(audio_path):
+def extract_audio_preview_ffmpeg(audio_path):
     try:
-        audio = AudioSegment.from_file(audio_path)
-        preview = audio[:10000]  # 10 seconds
-        buf = io.BytesIO()
-        preview.export(buf, format="mp3")
-        return buf.getvalue()
+        preview_path = audio_path + "_preview.mp3"
+        subprocess.run([
+            "ffmpeg", "-y", "-i", audio_path,
+            "-t", "10", "-acodec", "libmp3lame", preview_path
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if os.path.exists(preview_path):
+            with open(preview_path, "rb") as f:
+                return f.read()
     except:
-        return None
+        pass
+    return None
 
 if uploaded_file:
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -84,9 +86,9 @@ if uploaded_file:
                     continue
 
                 if ext in supported_audio_exts:
-                    audio_preview = extract_audio_preview(file_path)
-                    if audio_preview:
-                        st.audio(audio_preview, format="audio/mp3")
+                    audio_data = extract_audio_preview_ffmpeg(file_path)
+                    if audio_data:
+                        st.audio(audio_data, format="audio/mp3")
                     else:
                         st.warning(f"Could not render audio preview for {file}")
                     continue
