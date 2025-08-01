@@ -35,7 +35,9 @@ if uploaded_file:
                 st.info("No preview available for this file type.")
                 st.markdown("""
                 ---
-                <div style='text-align: center; font-size: 0.8em; color: gray;'>
-                © 2025 ZipView — Protected by U.S. and U.K. provisional application
-                </div>
-                """, unsafe_allow_html=True)
+               st.markdown("""
+---
+<div style='text-align: center; font-size: 0.8em; color: gray;'>
+© 2025 ZipView — Protected by U.S. and U.K. provisional application
+</div>
+""", unsafe_allow_html=True)
