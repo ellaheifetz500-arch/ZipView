@@ -1,3 +1,2 @@
 streamlit
-pillow
-PyPDF2
+Pillow
