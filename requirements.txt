@@ -1,3 +1,7 @@
 streamlit
 Pillow
 PyMuPDF
+pydub
+pdf2image
+python-docx
+ffmpeg-python
