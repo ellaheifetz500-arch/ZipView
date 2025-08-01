@@ -9,41 +9,36 @@ import base64
 
 st.set_page_config(page_title="ZipView – Preview ZIP Without Extraction", page_icon="📦")
 
-st.markdown("""
-    <style>
-        .logo-img {
-            width: 80px;
-        }
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .logo-title {
-            font-size: 2rem;
-            font-weight: bold;
-        }
-    </style>
-    <div class="logo-container">
-        <img src="data:image/png;base64,{0}" class="logo-img"/>
-        <span class="logo-title">ZipView – Preview ZIP Without Extraction</span>
-    </div>
-""".format(base64.b64encode(open("logo.png", "rb").read()).decode()), unsafe_allow_html=True)
+# Load logo
+with open("logo.jpg", "rb") as f:
+    logo_base64 = base64.b64encode(f.read()).decode()
 
-st.subheader("Upload a ZIP file to see its contents as thumbnails without extracting.")
-uploaded_file = st.file_uploader("Upload a ZIP file", type="zip")
+st.markdown(f"""
+    <div style='display: flex; align-items: center; gap: 1rem;'>
+        <img src='data:image/jpg;base64,{logo_base64}' width='60'/>
+        <h1>ZipView – Preview ZIP Without Extraction</h1>
+    </div>
+""", unsafe_allow_html=True)
+
+st.write("Upload a ZIP file to preview its contents without extraction.")
+
+uploaded_file = st.file_uploader("Choose a ZIP file", type="zip")
 
 if uploaded_file:
-    with zipfile.ZipFile(uploaded_file, 'r') as zip_ref:
+    with zipfile.ZipFile(uploaded_file) as zip_ref:
         for file in zip_ref.namelist():
-            st.write(f"**{file}**")
+            st.markdown(f"**README.md**")
             if file.lower().endswith(('.png', '.jpg', '.jpeg')):
                 image_data = zip_ref.read(file)
                 st.image(Image.open(io.BytesIO(image_data)))
-            elif file.lower().endswith('.pdf'):
-                pdf_reader = PyPDF2.PdfReader(io.BytesIO(zip_ref.read(file)))
-                st.write("📄 PDF Preview:")
-                st.text(pdf_reader.pages[0].extract_text())
+            elif file.lower().endswith(".pdf"):
+                pdf_file = io.BytesIO(zip_ref.read(file))
+                try:
+                    reader = PyPDF2.PdfReader(pdf_file)
+                    text = reader.pages[0].extract_text()
+                    st.text(text if text else "[No extractable text]")
+                except:
+                    st.warning("Couldn't preview this PDF.")
             elif file.lower().endswith(('.mp4', '.mov')):
                 video_bytes = zip_ref.read(file)
                 st.video(io.BytesIO(video_bytes))
