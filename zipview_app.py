@@ -9,12 +9,12 @@ import base64
 import subprocess
 
 st.set_page_config(
-    page_title="Preview ZIP Without Extraction",
+    page_title="ZipView – Preview ZIP without Extraction",
     page_icon="logo.png",
     layout="wide"
 )
 
-st.title("📦 Preview ZIP Without Extraction")
+st.title("📦 ZipView – Preview ZIP without Extraction")
 st.markdown("Upload a ZIP file to see its contents as thumbnails, PDFs, videos, and audio – no extraction needed.")
 
 uploaded_file = st.file_uploader("Upload a ZIP file", type="zip")
@@ -33,6 +33,14 @@ def extract_audio_preview_ffmpeg(audio_path):
         pass
     return None
 
+def is_pdf_file(file_path):
+    try:
+        with open(file_path, 'rb') as f:
+            header = f.read(4)
+            return header == b'%PDF'
+    except:
+        return False
+
 if uploaded_file:
     with tempfile.TemporaryDirectory() as tmpdirname:
         zip_path = os.path.join(tmpdirname, uploaded_file.name)
@@ -46,7 +54,6 @@ if uploaded_file:
         supported_video_exts = ["mp4", "mov", "avi"]
         supported_audio_exts = ["mp3", "wav", "m4a"]
         supported_text_exts = ["txt"]
-        supported_pdf_exts = ["pdf"]
 
         for root, dirs, files in os.walk(tmpdirname):
             for file in files:
@@ -67,15 +74,17 @@ if uploaded_file:
                         st.warning(f"Could not display image: {file}")
                     continue
 
-                if ext in supported_pdf_exts:
+                if is_pdf_file(file_path):
                     try:
+                        st.markdown("🔍 Attempting PDF preview...")
                         doc = fitz.open(file_path)
                         page = doc.load_page(0)
                         pix = page.get_pixmap()
                         img_bytes = pix.tobytes("png")
                         st.image(img_bytes)
-                    except:
-                        st.warning(f"Could not render PDF preview for {file}")
+                        st.markdown("✅ PDF preview displayed successfully.")
+                    except Exception as e:
+                        st.error(f"❌ Could not render PDF preview for {file}: {e}")
                     continue
 
                 if ext in supported_video_exts:
