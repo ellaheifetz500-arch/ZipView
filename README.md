@@ -1,15 +1,19 @@
-# Streamlit PDF Viewer (No Poppler, iframe Fallback)
+# Streamlit App - PDF Preview (First Page Only)
 
-This version of the app displays PDF files embedded via HTML iframe instead of using `st.pdf()`. It avoids the "No previewable files" error on Streamlit Cloud.
+This version of the app displays only the first page of each PDF found inside an uploaded ZIP file.
 
 ## ✅ Features
-- Upload a ZIP file with PDF(s)
-- Display each PDF using iframe
+- Upload a ZIP file with PDFs
+- Preview first page of each PDF as an image
 - No poppler required
-- No PDF viewer dependencies
 
-## 🚀 How to Run
+## 📦 Requirements
+- streamlit
+- PyMuPDF (fitz)
+- Pillow
+
+## 🚀 Run it:
 ```bash
 pip install -r requirements.txt
-streamlit run app_pdf_iframe_fallback.py
+streamlit run app_pdf_preview_first_page.py
 ```
