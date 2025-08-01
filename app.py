@@ -1,49 +1,26 @@
-
 import streamlit as st
 import zipfile
-import os
-import io
-from PIL import Image
-import PyPDF2
-import base64
+from io import BytesIO
+from pdf2image import convert_from_bytes
 
-st.set_page_config(page_title="ZipView – Preview ZIP Without Extraction", page_icon="📦")
+st.title("📦 ZIP PDF Previewer")
 
-# Load logo
-with open("logo.jpg", "rb") as f:
-    logo_base64 = base64.b64encode(f.read()).decode()
-
-st.markdown(f"""
-    <div style='display: flex; align-items: center; gap: 1rem;'>
-        <img src='data:image/jpg;base64,{logo_base64}' width='60'/>
-        <h1>ZipView – Preview ZIP Without Extraction</h1>
-    </div>
-""", unsafe_allow_html=True)
-
-st.write("Upload a ZIP file to preview its contents without extraction.")
-
-uploaded_file = st.file_uploader("Choose a ZIP file", type="zip")
+uploaded_file = st.file_uploader("העלה קובץ ZIP עם PDF", type="zip")
 
 if uploaded_file:
-    with zipfile.ZipFile(uploaded_file) as zip_ref:
-        for file in zip_ref.namelist():
-            st.markdown(f"**README.md**")
-            if file.lower().endswith(('.png', '.jpg', '.jpeg')):
-                image_data = zip_ref.read(file)
-                st.image(Image.open(io.BytesIO(image_data)))
-            elif file.lower().endswith(".pdf"):
-                pdf_file = io.BytesIO(zip_ref.read(file))
-                try:
-                    reader = PyPDF2.PdfReader(pdf_file)
-                    text = reader.pages[0].extract_text()
-                    st.text(text if text else "[No extractable text]")
-                except:
-                    st.warning("Couldn't preview this PDF.")
-            elif file.lower().endswith(('.mp4', '.mov')):
-                video_bytes = zip_ref.read(file)
-                st.video(io.BytesIO(video_bytes))
-            elif file.lower().endswith(('.mp3', '.wav')):
-                audio_bytes = zip_ref.read(file)
-                st.audio(io.BytesIO(audio_bytes))
-            else:
-                st.info("No preview available for this file type.")
+    with zipfile.ZipFile(uploaded_file) as archive:
+        pdf_files = [f for f in archive.namelist() if f.endswith(".pdf")]
+
+        if not pdf_files:
+            st.warning("לא נמצאו קבצי PDF בתוך קובץ ה-ZIP.")
+        else:
+            for pdf_name in pdf_files:
+                st.header(f"📄 {pdf_name}")
+                with archive.open(pdf_name) as pdf_file:
+                    pdf_bytes = pdf_file.read()
+                    try:
+                        images = convert_from_bytes(pdf_bytes)
+                        for i, img in enumerate(images):
+                            st.image(img, caption=f"עמוד {i+1}", use_column_width=True)
+                    except Exception as e:
+                        st.error(f"שגיאה בעת עיבוד {pdf_name}: {e}")
