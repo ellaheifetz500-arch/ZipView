@@ -2,52 +2,57 @@
 import streamlit as st
 import zipfile
 import os
-import io
-import base64
+import tempfile
 from PIL import Image
+import fitz  # PyMuPDF
+import base64
 
-st.set_page_config(page_title="ZipView – PDF + Video Preview", layout="wide")
-st.title("📦 ZipView – Enhanced Viewer")
+st.set_page_config(
+    page_title="Preview ZIP Without Extraction",
+    page_icon="logo.png",
+    layout="wide"
+)
+
+st.markdown("## ZipView – Preview ZIP Without Extraction")
+st.markdown("Upload a ZIP file to see its contents as thumbnails without extracting.")
 
 uploaded_file = st.file_uploader("Upload a ZIP file", type="zip")
 
-def render_pdf_embed(file_bytes):
-    b64 = base64.b64encode(file_bytes).decode()
-    pdf_display = f'<iframe src="data:application/pdf;base64,{b64}" width="100%" height="500px" type="application/pdf"></iframe>'
-    st.markdown(pdf_display, unsafe_allow_html=True)
-
 if uploaded_file:
-    with zipfile.ZipFile(uploaded_file, "r") as zip_ref:
-        file_list = zip_ref.namelist()
-        previews = []
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        zip_path = os.path.join(tmpdirname, uploaded_file.name)
+        with open(zip_path, "wb") as f:
+            f.write(uploaded_file.read())
 
-        for file in file_list:
-            if file.endswith("/"):
-                continue
-            file_bytes = zip_ref.read(file)
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(tmpdirname)
 
-            if file.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
-                try:
-                    image = Image.open(io.BytesIO(file_bytes))
-                    previews.append(("image", file, image))
-                except:
-                    pass
+        for root, dirs, files in os.walk(tmpdirname):
+            for file in files:
+                file_path = os.path.join(root, file)
+                ext = file.lower().split('.')[-1]
 
-            elif file.lower().endswith(".pdf"):
-                previews.append(("pdf", file, file_bytes))
+                st.markdown(f"**{file}**")
 
-            elif file.lower().endswith(".mp4"):
-                previews.append(("video", file, file_bytes))
+                if ext in ["png", "jpg", "jpeg", "webp"]:
+                    image = Image.open(file_path)
+                    st.image(image, use_container_width=True)
 
-        if previews:
-            st.subheader("📂 Previews")
-            for preview_type, name, content in previews:
-                st.markdown(f"**{name}**")
-                if preview_type == "image":
-                    st.image(content, use_container_width=True)
-                elif preview_type == "video":
-                    st.video(content)
-                elif preview_type == "pdf":
-                    render_pdf_embed(content)
-        else:
-            st.warning("No previewable files found in this ZIP.")
+                elif ext == "pdf":
+                    try:
+                        doc = fitz.open(file_path)
+                        page = doc.load_page(0)
+                        pix = page.get_pixmap()
+                        img_bytes = pix.tobytes("png")
+                        st.image(img_bytes)
+                    except:
+                        st.warning(f"Could not render PDF preview for {file}")
+
+                elif ext in ["mp4", "mov", "avi"]:
+                    with open(file_path, "rb") as video_file:
+                        video_bytes = video_file.read()
+                        st.video(video_bytes)
+                else:
+                    with open(file_path, "r", errors="ignore") as txt_file:
+                        content = txt_file.read(500)
+                        st.code(content)
