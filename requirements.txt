@@ -1,6 +1,1 @@
 streamlit
-Pillow
-PyMuPDF
-pdf2image
-python-docx
-ffmpeg-python
