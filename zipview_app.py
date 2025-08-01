@@ -37,6 +37,6 @@ if uploaded_file:
             st.subheader("📂 Previews")
             for name, img in previews:
                 st.markdown(f"**{name}**")
-st.image(img, use_container_width=True)
+                st.image(img, use_container_width=True)
         else:
             st.warning("No previewable files found in this ZIP.")
