@@ -1,5 +1,4 @@
+
 streamlit
-pdf2image
-Pillow
-pydub
-python-magic
+pillow
+PyPDF2
