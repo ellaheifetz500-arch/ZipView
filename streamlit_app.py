@@ -23,7 +23,7 @@ if uploaded_file:
             if file.lower().endswith((".png", ".jpg", ".jpeg")):
                 with zip_ref.open(file) as img_file:
                     image = Image.open(img_file)
-                    st.image(image, caption=file, use_column_width=True)
+                    st.image(image, use_container_width=True)
             elif file.lower().endswith(".pdf"):
                 st.markdown(f"📄 PDF preview not available in thumbnail mode. File: `{file}`")
             elif file.lower().endswith((".mp4", ".mov", ".avi")):
